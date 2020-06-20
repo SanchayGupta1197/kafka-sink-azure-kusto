@@ -45,7 +45,7 @@ public class KustoSinkTask extends SinkTask {
     
     private static final Logger log = LoggerFactory.getLogger(KustoSinkTask.class);
     
-    static final String FETCH_PRINCIPAL_ROLES_QUERY = ".show principal access with (principal = '%s', accesstype='ingest',database='%s',table='%s')";
+    static final String FETCH_PRINCIPAL_ROLES_QUERY = ".show principal access with (principal ='%s', accesstype='ingest',database='%s',table='%s')";
     static final int INGESTION_ALLOWED_INDEX = 3;
     
     private final Set<TopicPartition> assignment;
@@ -257,12 +257,14 @@ public class KustoSinkTask extends SinkTask {
         try {
 
             String authenticateWith;
-            if (config.getAuthAppid() != null) {
+            if (!Strings.isNullOrEmpty(config.getAuthAppid())) {
                 authenticateWith = "aadapp=" + config.getAuthAppid();
             } else {
                 authenticateWith = "aaduser=" + config.getAuthUsername();
             }
-            KustoOperationResult rs = engineClient.execute(database, String.format(FETCH_PRINCIPAL_ROLES_QUERY, authenticateWith, database, table));
+            log.info("authenticatewith{}, appid{},username{}",authenticateWith,config.getAuthAppid(),config.getAuthUsername());
+            String query= String.format(FETCH_PRINCIPAL_ROLES_QUERY, authenticateWith, database, table);
+            KustoOperationResult rs = engineClient.execute(database, query);
             boolean hasAccess = (boolean) rs.getPrimaryResults().getData().get(0).get(INGESTION_ALLOWED_INDEX);
             if (hasAccess) {
                 log.info("User has appropriate permissions to sink data into the Kusto table={}", table);
@@ -322,14 +324,12 @@ public class KustoSinkTask extends SinkTask {
         config = new KustoSinkConfig(props);
         String url = config.getKustoUrl();
       
-        validateTableMappings(config);
+        //validateTableMappings(config);
         
         topicsToIngestionProps = getTopicsToIngestionProps(config);
         
         // this should be read properly from settings
-        kustoIngestClient = createKustoIngestClient(config);
-        
-        commitImmediately = config.getKustoCommitImmediatly();
+        kustoIngestClient = createKustoIngestClient(config);commitImmediately = config.getKustoCommitImmediatly();
         
         log.info(String.format("Started KustoSinkTask with target cluster: (%s), source topics: (%s)", 
             url, topicsToIngestionProps.keySet().toString()));
