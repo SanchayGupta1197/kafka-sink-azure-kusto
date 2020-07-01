@@ -101,7 +101,7 @@ Since, the Avro Converter is being used for the demo, It is necessary to create 
 ']'
 ```
 > **Note**   
-> Properties are the corresponding Field in you record schema.
+> Properties are the corresponding fields in you record schema.
 
 For more information about ingestion mapping, see [Kusto Data mappings](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/mappings).
 
