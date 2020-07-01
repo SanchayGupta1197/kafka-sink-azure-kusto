@@ -8,7 +8,7 @@ The Azure Kusto Sink Connector offers the following features:
 
 -  **At-least-Once Semantic**: The connector creates a new entry into the Kusto table for each record in Kafka topic. However, duplicates are still possible to occur when failure, rescheduling or re-configuration happens. This **semantic** is followed when `behavior.on.error` is set to `fail` mode. In case of `log` and `ignore` modes, the connector promises **at-most-once** semantics.
 -  **Automatic Retries**: The Azure Kusto Sink Connector may experience network failures while connecting to the Kusto Ingestion URI. The connector will automatically retry with an exponential backoff to ingest records. The property `errors.retry.max.time.ms`  controls the maximum time until which the connector will retry ingesting the records.
--  **Compression**:The connector batches and compresses records into a file before ingesting. 
+-  **Compression**: The connector batches the records into a file and performs GZIP compression before ingesting file to Kusto. The GZIP compression is applied to all the [data formats](#kusto-record-formats) supported by the Connector.  
 ---
 ## Prerequisites
 
@@ -18,11 +18,11 @@ The following are required to run the **Azure Kusto** Sink Connector:
 - Connect: Confluent Platform 4.0.0 or above, or Kafka 1.0.0 or above
 - Java 1.8
 - Kusto Ingestion URL
-- User with ingest privilege
-- Configure ingestion `Topics` and `DLQ Topic` with the desired replication and partitions before starting the connector.
+- Database ingestor role
+- Configure ingestion `Topics` and `DLQ Topic` with the desired replication and partitions.
 > **Note**   
 >If `topics` or `dlq.topic.name` is not present, the connector will automatically create them with the default 
->replication factor and partition numbers.
+>replication factor and partition numbers as one.
 
 ----
 
@@ -33,11 +33,10 @@ The Azure Kusto Sink connector consumes records from the specified topics, organ
 The Kusto connector can serialize records using a number of formats. The `format` attribute in the connector’s `kusto.tables.topics.mapping` configuration property identifies the format to be used. The Kusto connector comes with several implementations:
 
 - **Avro**: Use `value.converter=io.confluent.connect.avro.AvroConverter`, and `format:'avro` in `kusto.tables.topics.mapping` configuration property  to ingest avro records into kusto table.
-- **Schemaless JSON**:Use `value.converter=org.apache.kafka.connect.json.JsonConverter`,`value.converter.schemas.enable=false`, and `format:'json` in `kusto.tables.topics.mapping` configuration property  to ingest json records having no schema into kusto table.
-- **JSON with Schema**:Use `value.converter=org.apache.kafka.connect.json.JsonConverter`,`value.converter.schemas.enable=true`, and `format:'json` in `kusto.tables.topics.mapping` configuration property  to ingest json records having a schema into kusto table.
-- **JSON using JsonSchemaConverter**:Use `value.converter=io.confluent.connect.json.JsonSchemaConverter`, and `format:'json` in `kusto.tables.topics.mapping` configuration property  to ingest json records having a schema into kusto table. Note **Confluent Platform 5.5.0** or above required.
-- **String**:Use `value.converter=org.apache.kafka.connect.storage.StringConverter`, and `format:'avro`, `format:'json`, `format:'csv`, in `kusto.tables.topics.mapping` configuration property  to ingest avro, json, csv records respectively into kusto table.
-- **Byte**:Use `value.converter=org.apache.kafka.connect.converters.ByteArrayConverter`, and `format:'avro`, `format:'json`, `format:'csv`, in `kusto.tables.topics.mapping` configuration property  to ingest avro, json, csv records respectively into kusto table.
+- **Schemaless JSON**: Use `value.converter=org.apache.kafka.connect.json.JsonConverter`,`value.converter.schemas.enable=false`, and `format:'json` in `kusto.tables.topics.mapping` configuration property  to ingest json records having no schema into kusto table.
+- **JSON with Schema**: Use `value.converter=org.apache.kafka.connect.json.JsonConverter`,`value.converter.schemas.enable=true`, and `format:'json` in `kusto.tables.topics.mapping` configuration property  to ingest json records having a schema into kusto table. Alternatively, use `value.converter=io.confluent.connect.json.JsonSchemaConverter`, and `format:'json` in `kusto.tables.topics.mapping` configuration property  to ingest json records having a schema into kusto table. Note **Confluent Platform 5.5.0** or above required for using the new JsonSchemaConverter.
+- **String**: Use `value.converter=org.apache.kafka.connect.storage.StringConverter`, and `format:'avro`, `format:'json`, `format:'csv`, in `kusto.tables.topics.mapping` configuration property  to ingest avro, json, csv records respectively into kusto table.
+- **Byte**: Use `value.converter=org.apache.kafka.connect.converters.ByteArrayConverter`, and `format:'avro`, `format:'json`, `format:'csv`, in `kusto.tables.topics.mapping` configuration property  to ingest avro, json, csv records respectively into kusto table.
  
 ----
 ## Installation
@@ -60,7 +59,7 @@ Build the connector locally using Maven to produce complete Jar with dependencie
 ```
 mvn clean compile assembly:single
 ```
-:grey_exclamation: Move the jar inside a folder in Share/java folder within the Confluent Platform installation directory.
+:grey_exclamation: Move the jar inside a folder in /share/java folder within the Confluent Platform installation directory.
 
 
 ----
@@ -81,7 +80,7 @@ Connector is retrying.
 
 
 > **Warning**    
-> The current Kusto SDK shows logs ingestion failures at a file-level rather than at record level. This results in failure in the ingestion of all records batched in the file. Thus, for data that might have invalid or corrupt records, the connector follows the at-most-once delivery semantics.
+> The Kusto ingestion failures are logged at file level. Therefore, a single log entry for records that fail to get ingested via file ingestion. Also, a single malformed record in a file results in failure of ingestion for the entire file.
 
 ### Kusto Table and Table Mapping Setup
 
