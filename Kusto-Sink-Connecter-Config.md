@@ -50,7 +50,7 @@ For Example:
 ##### `tempdir.path`
 Temp dir that will be used by kusto sink to buffer records.
 - Type: string
-- Default: System temp Directory
+- Default: System temp directory
 - Importance: Low
 
 
@@ -75,13 +75,13 @@ Kusto sink max staleness in milliseconds (per topic+partition combo).
 Behavior on error setting for ingestion of records into Kusto table.  
 Must be configured to one of the following:
         
-`fail`   
+`FAIL`   
 Stops the connector when an error occurs while processing records or ingesting records in Kusto table.
         
-`ignore`   
+`IGNORE`   
 Continues to process next set of records when error occurs while processing records or ingesting records in Kusto table.
         
-`log`   
+`LOG`   
 Logs the error message and continues to process subsequent records when an error occurs while processing records or ingesting records in Kusto table, available in connect logs.
 
 - Type: string

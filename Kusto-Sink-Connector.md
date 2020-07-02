@@ -6,7 +6,7 @@ The Azure Kusto Sink Connector is used to read records form Kafka topics and ing
 
 The Azure Kusto Sink Connector offers the following features:     
 
--  **At-least-Once Semantic**: The connector creates a new entry into the Kusto table for each record in Kafka topic. However, duplicates are still possible to occur when failure, rescheduling or re-configuration happens. This **semantic** is followed when `behavior.on.error` is set to `fail` mode. In case of `log` and `ignore` modes, the connector promises **at-most-once** semantics.
+-  **At-least-Once Semantic**: The connector creates a new entry into the Kusto table for each record in Kafka topic. Duplicates can occur when failure, rescheduling or re-configuration happens. This **semantic** is followed when `behavior.on.error` is set to `fail` mode. In case of `log` and `ignore` modes, the connector promises **at-most-once** semantics.
 -  **Automatic Retries**: The Azure Kusto Sink Connector may experience network failures while connecting to the Kusto Ingestion URI. The connector will automatically retry with an exponential backoff to ingest records. The property `errors.retry.max.time.ms`  controls the maximum time until which the connector will retry ingesting the records.
 -  **Compression**: The connector batches the records into a file and performs GZIP compression before ingesting file to Kusto. The GZIP compression is applied to all the [data formats](#kusto-record-formats) supported by the Connector.  
 ---
@@ -84,7 +84,7 @@ Connector is retrying.
 
 ### Kusto Table and Table Mapping Setup
 
-Before using the Azure Kusto Sink Connector, It is required to set up the table and its corresponding table mapping depending on our record schema, and our converter type.
+Before using the Azure Kusto Sink Connector, It is required to set up the table and its corresponding table mapping depending on the record schema, and the converter type.
 
  Use the following to [create a sample table](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/create-table-command) in Kusto.
  
@@ -101,12 +101,12 @@ Since, the Avro Converter is being used for the demo, It is necessary to create 
 ']'
 ```
 > **Note**   
-> Properties are the corresponding fields in you record schema.
+> Properties are the corresponding fields in the record schema.
 
 For more information about ingestion mapping, see [Kusto Data mappings](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/mappings).
 
 ### Start Confluent
-Start the Confluent services using the following [Confluent CLI](https://docs.confluent.io/current/cli/index.html#cli) command:
+Start the Confluent Platform using the following [Confluent CLI](https://docs.confluent.io/current/cli/index.html#cli) command:
 
  ```shell script
 confluent local start
@@ -115,7 +115,7 @@ confluent local start
 > Do not use the Confluent CLI in production environments. 
 
 ### Property-based example
-Create a configuration file `kusto-sink.properties` with the following content. this file should
+Create a configuration file `kusto-sink.properties` with the following content. This file should
 be placed inside the Confluent Platform installation directory. This configuration is used typically along with standalone workers.
 
 ```
