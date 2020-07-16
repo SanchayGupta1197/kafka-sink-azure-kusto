@@ -19,9 +19,9 @@ The following are required to run the **Azure Kusto** Sink Connector:
 - Java 1.8
 - Kusto Ingestion URL
 - Database ingestor role
-- Configure ingestion `Topics` and `DLQ Topic` with the desired replication and partitions.
+- Configure ingestion `Topics` and `Miscellaneous Dead-Letter Queue Topic` with the desired replication and partitions.
 > **Note**   
->If `topics` or `dlq.topic.name` is not present, the connector will automatically create them with the default 
+>If `topics` or `misc.deadletterqueue.topic.name` is not present, the connector will automatically create them with the default 
 >replication factor and partition numbers as one.
 
 ----
@@ -71,7 +71,7 @@ For a complete list of configuration properties for this connector, see [Azure K
 The quick start guide uses the Azure Sink Connector to consume records from a Kafka topic and ingest records into Kusto tables.
 
 > **Important**    
-> Since retries can be for a longer duration the Kafka Consumer may leave the group. This will result in a new Consumer
+> Since retries occur both at the connector and Kusto Cluster level, they can be for a longer duration within which the Kafka Consumer may leave the group. This will result in a new Consumer
 reading records from the last committed offset leading to duplication of records in Kusto Database. Also, if the error persists,
 it might also result in duplicate records to be written into the DLQ topic.
 Recommendation is to set the following worker configuration as `connector.client.config.override.policy=All` and set the
@@ -137,8 +137,13 @@ value.converter=io.confluent.connect.avro.AvroConverter
 value.converter.schema.registry.url=http://localhost:8081
 
 behavior.on.error=LOG
-dlq.bootstrap.servers=localhost:9092
-dlq.topic.name=dlq-topic-log
+misc.deadletterqueue.bootstrap.servers=localhost:9092
+misc.deadletterqueue.topic.name=network-error-dlq-topic
+
+errors.tolerance=all
+errors.deadletterqueue.topic.name=connect-dlq-topic
+errors.deadletterqueue.topic.replication.factor=1
+errors.deadletterqueue.context.headers.enable=true
 errors.retry.max.time.ms=2000
 errors.retry.backoff.time.ms=1000
 ```
@@ -166,8 +171,14 @@ The output should resemble:
     "value.converter": "io.confluent.connect.avro.AvroConverter",
     "value.converter.schema.registry.url": "http://localhost:8081",
     "behavior.on.error": "LOG",
-    "dlq.bootstrap.servers": "localhost:9092",
-    "dlq.topic.name": "dlq-topic-log",
+    "misc.deadletterqueue.bootstrap.servers": "localhost:9092",
+    "misc.deadletterqueue.topic.name": "network-error-dlq-topic",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "connect-dlq-topic",
+    "errors.deadletterqueue.topic.replication.factor": "1",
+    "errors.deadletterqueue.context.headers.enable": "true",
+    "errors.retry.max.time.ms": "2000",
+    "errors.retry.backoff.time.ms": "1000",
     "name": "kusto-sink-connector"
   },
   "tasks": [],
@@ -209,8 +220,7 @@ Check here for more information about the Kafka Connect [REST API](https://docs.
 {
     "name": "KustoSinkConnectorCrimes",
     "config": {
-
-	"connector.class":"com.microsoft.azure.kusto.kafka.connect.sink.KustoSinkConnector",
+        "connector.class":"com.microsoft.azure.kusto.kafka.connect.sink.KustoSinkConnector",
 	"topics":"SampleAvroTopic",
 	"tasks.max":1,
 	"kusto.tables.topics.mapping":[{"topic": "SampleAvroTopic","db": "DatabaseName", "table": "SampleKustoTable","format": "avro", "mapping":"SampleAvroMapping"}],
@@ -223,8 +233,14 @@ Check here for more information about the Kafka Connect [REST API](https://docs.
 	"value.converter":"io.confluent.connect.avro.AvroConverter",
 	"value.converter.schema.registry.url":"http://localhost:8081",
 	"behavior.on.error":"LOG",
-	"dlq.bootstrap.servers":"localhost:9092",
-	"dlq.topic.name":"dlq-topic-log"
+	"misc.deadletterqueue.bootstrap.servers": "localhost:9092",
+    	"misc.deadletterqueue.topic.name": "network-error-dlq-topic",
+    	"errors.tolerance": "all",
+        "errors.deadletterqueue.topic.name": "connect-dlq-topic",
+        "errors.deadletterqueue.topic.replication.factor": "1",
+        "errors.deadletterqueue.context.headers.enable": "true",
+        "errors.retry.max.time.ms": "2000",
+        "errors.retry.backoff.time.ms": "1000"
     }
 }
 ```
@@ -278,6 +294,14 @@ While the console is waiting for the input, use the following three records and 
 
 Finally, check the Kusto table `SampleKustoTable` to see the newly ingested records.
 
+---
+## Dead-Letter-Queue Support   
+### Error Dead-Letter-Queue     
+The Azure Kusto Sink Connector uses the [error dead-letter queue (DLQ)](https://kafka.apache.org/24/documentation.html#sinkconnectconfigs) to produces failure records for messages that result in an error when processed by this sink connector, or its transformations or converters. 
+### Miscellaneous Dead-Letter-Queue
+The Azure Kusto Sink Connector uses the miscellaneous dead-letter queue (DLQ) to produces failure records for messages that failed to be ingested in to the Kusto cluster due to network interruptions or unavailability of the Kusto Cluster.
+> Note    
+> When using Dead-Letter Queues in a secured environment add additional security configurations prepended with `error.deadletterqueue.` and `misc.deadletterqueue` respectively.   
 ---
 ## Additional Documentation
 
