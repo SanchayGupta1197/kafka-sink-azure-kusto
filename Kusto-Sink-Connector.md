@@ -66,10 +66,18 @@ mvn clean compile assembly:single
 ## Configuration Properties
 For a complete list of configuration properties for this connector, see [Azure Kusto Sink Connector Configuration Properties](<// Todo add Link>).
 
----
-## Quick Start
-The quick start guide uses the Azure Sink Connector to consume records from a Kafka topic and ingest records into Kusto tables.
+---     
 
+## Dead-Letter-Queue Support   
+### Error Dead-Letter-Queue     
+The Azure Kusto Sink Connector uses the [error dead-letter queue (DLQ)](https://kafka.apache.org/24/documentation.html#sinkconnectconfigs) to produces failure records for messages that result in an error when processed by this sink connector, or its transformations or converters. 
+### Miscellaneous Dead-Letter-Queue
+The Azure Kusto Sink Connector uses the miscellaneous dead-letter queue (DLQ) to produces failure records for messages that failed to be ingested in to the Kusto cluster due to network interruptions or unavailability of the Kusto Cluster.
+> Note    
+> When using Dead-Letter Queues in a secured environment add additional security configurations prepended with `error.deadletterqueue.` and `misc.deadletterqueue.` respectively.   
+---
+## Retries
+The Azure Kusto Sink Connector may experience problems writing to the Kusto Cluster, due to network interruptions, or even unavailability of the Kusto Cluster. The connector will retry the for a maximum time duration mentioned as `errors.retry.max.time.ms` with a backoff period between subsequent retries as mentioned in the `errors.retry.backoff.time.ms` before failing. 
 > **Important**    
 > Since retries occur both at the connector and Kusto Cluster level, they can be for a longer duration within which the Kafka Consumer may leave the group. This will result in a new Consumer
 reading records from the last committed offset leading to duplication of records in Kusto Database. Also, if the error persists,
@@ -77,7 +85,12 @@ it might also result in duplicate records to be written into the DLQ topic.
 Recommendation is to set the following worker configuration as `connector.client.config.override.policy=All` and set the
 `consumer.override.max.poll.interval.ms` config to a high enough value to avoid consumer leaving the group while the
 Connector is retrying.
+---
+## Quick Start
+The quick start guide uses the Azure Sink Connector to consume records from a Kafka topic and ingest records into Kusto tables.
 
+> **Note**     
+> A SAS token is generated after the successful authentication of the connector. Therefore, if a change in permission occur while the connector is running the connector will continue to run without failing until the granted SAS token expires.    
 
 > **Warning**    
 > The Kusto ingestion failures are logged at file level. Therefore, a single log entry for records that fail to get ingested via file ingestion. Also, a single malformed record in a file results in failure of ingestion for the entire file.
@@ -294,14 +307,6 @@ While the console is waiting for the input, use the following three records and 
 
 Finally, check the Kusto table `SampleKustoTable` to see the newly ingested records.
 
----
-## Dead-Letter-Queue Support   
-### Error Dead-Letter-Queue     
-The Azure Kusto Sink Connector uses the [error dead-letter queue (DLQ)](https://kafka.apache.org/24/documentation.html#sinkconnectconfigs) to produces failure records for messages that result in an error when processed by this sink connector, or its transformations or converters. 
-### Miscellaneous Dead-Letter-Queue
-The Azure Kusto Sink Connector uses the miscellaneous dead-letter queue (DLQ) to produces failure records for messages that failed to be ingested in to the Kusto cluster due to network interruptions or unavailability of the Kusto Cluster.
-> Note    
-> When using Dead-Letter Queues in a secured environment add additional security configurations prepended with `error.deadletterqueue.` and `misc.deadletterqueue` respectively.   
 ---
 ## Additional Documentation
 
