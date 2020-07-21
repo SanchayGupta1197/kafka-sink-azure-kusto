@@ -72,7 +72,9 @@ For a complete list of configuration properties for this connector, see [Azure K
 ### Error Dead-Letter-Queue     
 The Azure Kusto Sink Connector uses the [error dead-letter queue (DLQ)](https://kafka.apache.org/24/documentation.html#sinkconnectconfigs) to produces failure records for messages that result in an error when processed by this sink connector, or its transformations or converters. 
 ### Miscellaneous Dead-Letter-Queue
-The Azure Kusto Sink Connector uses the miscellaneous dead-letter queue (DLQ) to produces failure records for messages that failed to be ingested in to the Kusto cluster due to network interruptions or unavailability of the Kusto Cluster.
+The Azure Kusto Sink Connector uses the miscellaneous dead-letter queue (DLQ) to produce failed records into Kafka for the following scenarios: 
+- Failed to be ingested in to the Kusto cluster when `IngestionServiceException` is caught due to network interruptions or unavailability of the Kusto Cluster.
+- Failed to be written into file for ingestion when `IOException |DataException` are caught due to temp directory does not exist , user has insufficient permission to write to/ create a file in the temp directory.   
 > Note    
 > When using Dead-Letter Queues in a secured environment add additional security configurations prepended with `error.deadletterqueue.` and `misc.deadletterqueue.` respectively.   
 ---

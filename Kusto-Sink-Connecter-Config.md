@@ -90,14 +90,14 @@ Logs the error message and continues to process subsequent records when an error
 - Importance: Low
     
 ##### `misc.deadletterqueue.bootstrap.servers`   
-Configure this list to Kafka broker's address(es) to which Connector should write records failed due to network interruptions or unavailability of Kusto cluster. This list should be in the form host-1:port-1,host-2:port-2,…host-n:port-n. 
+Configure this list to Kafka broker's address(es) to which Connector should write records failed due to restrictions while writing to the file in `tempdir.path`, network interruptions or unavailability of Kusto cluster. This list should be in the form host-1:port-1,host-2:port-2,…host-n:port-n. 
 - Type: List
 - Default: ""
 - Importance: Low   
 
 
 ##### `misc.deadletterqueue.topic.name`   
-Set this to the Kafka topic's name to which Connector should write records failed due to network interruptions or unavailability of Kusto cluster.
+Set this to the Kafka topic's name to which Connector should write records failed due to restrictions while writing to the file in `tempdir.path`, network interruptions or unavailability of Kusto cluster.
 - Type: string
 - Default: ""
 - Importance: Low 
