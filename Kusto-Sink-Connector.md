@@ -55,8 +55,17 @@ cd ./kafka-sink-azure-kusto
 - Java >=1.8
 - Maven
 
-Build the connector locally using Maven to produce complete Jar with dependencies
+Building locally using Maven is simple:
+
+```bash
+mvn clean install
 ```
+
+The connector jar along with jars of associated dependencies will be found under `target/components/packages/microsoftcorporation-kafka-sink-azure-kusto-1.0.1/microsoftcorporation-kafka-sink-azure-kusto-1.0.1/lib/` folder.
+
+Use the following command to build an uber jar.
+
+```bash
 mvn clean compile assembly:single
 ```
 :grey_exclamation: Move the jar inside a folder in /share/java folder within the Confluent Platform installation directory.
